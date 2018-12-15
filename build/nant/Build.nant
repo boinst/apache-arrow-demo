@@ -1,0 +1,48 @@
+﻿<?xml version="1.0"?>
+<!--
+    Build process for Apache Arrow example project.
+-->
+<project 
+    name="ApacheArrow" 
+    default="Build" 
+    basedir="..\.."
+    description="Apache Arrow Test Project" >
+
+    <include buildfile="build\nant\BuildConfiguration.include" />
+    <include buildfile="build\nant\Tools.include" />
+    <include buildfile="build\nant\Vcpkg.nant" /> <!-- Vckpg -->
+    
+    <!-- version number of this project -->
+    <property name="version2" value="0.1" />
+    <property name="versionmeta" value="-alpha+dev" />
+    <property name="version" value="${version2}${versionmeta}" />
+    <property name="outputDirectory" value="bin/${platform}/${buildConfiguration}" />
+       
+    
+    <target name="Build" depends="Vcpkg, MSBuild" >
+        <property name="dir_build" value="out\${platform}" />
+        
+        <!-- invoke cmake to build msbuild-compatible build files. -->
+        <!-- 
+            TODO: In order to use Ninja here as the generator, we should run "cmake" from the
+            VC++ command-prompt. There is an implementation of that in the 3PL repository.
+            https://stackoverflow.com/questions/31262342/cmake-g-ninja-on-windows-specify-x64
+        -->
+        <echo message="Invoking CMake" />
+        <exec program="cmake.exe" workingdir="${dir_build}" >
+            <arg line='-G "Visual Studio 15 2017 Win64"' if="${platform == 'x64'}"/>
+            <arg line='-G "Visual Studio 15 2017"' if="${platform == 'x86'}"/>
+            <arg value="${dir_base}\src" />
+            <arg value="-DCMAKE_TOOLCHAIN_FILE=${vcpkg_cmake_toolchain_file}" />
+        </exec>
+        
+        <!-- perform the build -->
+        <echo message="Building the native template project ${platform} ${buildConfiguration}." />
+   
+        <exec program="cmake.exe" workingdir="${dir_build}">
+            <arg value="--build" />
+            <arg value="." />
+            <arg line="--config ${buildConfiguration}" /><!-- Build "Release" or "Debug" configuration -->
+        </exec>
+    </target>
+</project>

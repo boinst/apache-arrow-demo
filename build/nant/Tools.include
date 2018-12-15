@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<!--
+    This project defines the paths of the various tools that we use in a build.
+-->
+<project name="Tools" basedir="..\..">
+    <!-- core folders -->
+    <property name="dir_base" value="${project::get-base-directory()}" /><!-- base folder of this project -->
+    <property name="dir_ztools" value="${dir_base}\build\tools\ztools" />
+    
+    <!-- Before running anything else, ensure zulfiqar tools are available. -->
+    <exec program="powershell.exe" commandline='-noprofile -ExecutionPolicy Bypass -noninteractive -nologo -file "build/tools/zulfiqar2.ps1"' />
+    
+    <!-- load nant tasks from external libraries -->
+    <loadtasks assembly="${dir_ztools}\nantcontrib-0.92\nantcontrib-0.92\bin\NAnt.Contrib.Tasks.dll" />
+    
+    <!-- Tool paths -->
+    <property name="tool_7zip" value="${dir_ztools}\7zip-9.20\7za.exe" />
+    
+    <!-- VsWhere -->
+    <target name="VsWhere" >
+        <property name="script_downloadutility" value="${dir_base}\build\scripts\utility\download.ps1" />
+        <property name="tool_vswhere" value="${dir_base}\build\tools\vswhere\vswhere-2.5.2.exe" /> <!-- A tool used for locating Visual Studio Build Tools --> 
+        <if test="${not file::exists(tool_vswhere)}" >
+            <echo message="Updating VsWhere" />
+            <property name="url" value="https://github.com/Microsoft/vswhere/releases/download/2.5.2/vswhere.exe" />
+            <exec program="powershell.exe" commandline='-version 4.0 -noprofile -ExecutionPolicy Bypass -noninteractive -nologo -file "${script_downloadutility}" "${url}" "${tool_vswhere}"' />
+        </if>
+    </target>
+    
+    <!-- Locate MSBuild using "vswhere" -->
+    <target name="MSBuild" depends="VsWhere">
+        <property name="temp" value="${dir_base}\build\temp\vsbuildtools_installpath.txt" />
+        <delete file="${temp}" />
+        <exec program="${tool_vswhere}" output="${temp}">
+            <arg line="-latest" /> <!-- If multiple versions found, return only the newest version -->
+            <arg line='-version "[15.0, 16.0)"' /> <!-- Explicitly look for Visual Studio 2017 -->
+            <arg line="-property installationPath" /> <!-- We only want the path where the tool is installed -->
+            <arg value="-requires" /> <!-- Require the following components -->
+            <arg value="Microsoft.Component.MSBuild" /> <!-- MSBuild -->
+            <arg value="Microsoft.VisualStudio.Component.VC.Tools.x86.x64" /> <!-- VC++ 2017 version 15.8 v14.15 latest v141 tools -->
+        </exec>
+        
+        <!-- Fail if no matching installation was located -->
+        <fail message="Failed to locate an installation of Visual Studio 2017 Build Tools with the requisite components."
+            if="${not file::exists(temp)}" />
+        
+        <loadfile file="${temp}" property="dir_vsbuildtools" /> 
+        <property name="dir_vsbuildtools" value="${string::trim(dir_vsbuildtools)}" />
+        <echo message="Visual Studio 2017 Build Tools Install Directory: ${dir_vsbuildtools}" />
+        <property name="tool_msbuild" value="${dir_vsbuildtools}\MSBuild\15.0\Bin\MSBuild.exe" /> <!-- Visual Studio 2017 version of MSBuild -->
+        
+        <!-- 
+            Locate the installation directory of MSVC Tools.
+            We use this to locate the NMake tool. 
+        -->
+        <foreach item="Folder" property="msvctools">
+            <in>
+                <items basedir="${dir_vsbuildtools}\VC\Tools\">
+                    <include name="MSVC\*" />
+                    <exclude name="MSVC" />
+                </items>
+            </in>
+            <do>
+                <echo message="${msvctools}" />
+                <fail message="More than one MSVC Tools installation has been discovered." if="${property::exists('dir_msvctools')}" />
+                <property name="dir_msvctools" value="${msvctools}" />
+            </do>
+        </foreach>
+        <fail message='No installation of MSVC Tools has been discovered.' unless="${property::exists('dir_msvctools')}" />
+        
+        <!-- Locate NMake -->
+        <property name="tool_nmake" value="${dir_msvctools}\bin\HostX86\x86\nmake.exe" if="${platform == 'x86'}" />
+        <property name="tool_nmake" value="${dir_msvctools}\bin\HostX64\x64\nmake.exe" if="${platform == 'x64'}" />
+        
+        <property name="tool_vcvarsall" value="${dir_vsbuildtools}\VC\Auxiliary\Build\vcvarsall.bat" /> <!-- called by "vcenv" scripts -->
+        <setenv name="VS_VCVARS_PATH" value="${tool_vcvarsall}" /> <!-- called by "vcenv" scripts -->
+
+        <!-- Get the installation location of the Windows SDK from the registry -->
+        <!-- https://stackoverflow.com/questions/35119223/how-to-programatically-detect-and-locate-the-windows-10-sdk -->
+        <readregistry property="dir_winsdk" key="SOFTWARE\WOW6432Node\Microsoft\Windows Kits\Installed Roots\KitsRoot10" hive="LocalMachine" failonerror="false" />
+        
+        <!-- Assert that the tools are found before proceeding. -->
+        <fail message='MSBuild not found at path "${tool_msbuild}".' unless="${file::exists(tool_msbuild)}" />
+        <fail message='NMake not found at path "${tool_nmake}".' unless="${file::exists(tool_nmake)}" />
+        <fail message='VCVARS not found at path "${tool_vcvarsall}".' unless="${file::exists(tool_vcvarsall)}" />
+        <fail message="Windows 10 SDK not installed" if="${not property::exists('dir_winsdk')}" />
+    </target>
+
+</project>

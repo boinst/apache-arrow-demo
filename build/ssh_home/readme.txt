@@ -1,0 +1,2 @@
+This directory is set as "Home" when performing operations over SSH. The key ingredient is the "known_hosts" file. Without it, calls will hang
+while waiting for the user to accept or decline a server SSH key.

@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!-- defines important directories -->
+<project name="Directories" basedir="..\..">
+    <!-- external definitions -->
+    <include buildfile="Tools.include" />
+    <include buildfile="BuildConfiguration.include" />
+    
+    <!-- A file that can be used as a temporary file for any operation. -->
+    <property name="dir.temp" value="build\temp" />
+    <property name="file.temp" value="${dir.temp}\tempfile.txt" />
+
+    <!-- Folders -->
+    <property name="dir_artifacts" value="build\artifacts" />
+        
+    <!-- -->
+    <mkdir dir="build/artifacts" if="${not directory::exists('build/artifacts')}" />
+    <mkdir dir="build/temp" if="${not directory::exists('build/temp')}" />
+</project>

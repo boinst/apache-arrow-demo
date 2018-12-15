@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<!--
+    This project defines build configuration properties.
+    Many of our nant scripts expect to be called with platform set to x86 or x64 and build configuration
+    set to  Release or Debug. This script sets some defaults for those properties.
+-->
+<project name="BuildConfiguration" basedir="..\..">
+    <!-- set defaults -->
+    <property name="platform" overwrite="false" value="x86" unless="${property::exists('platform')}" /><!-- set "platform" to "x86" unless it has been set on the command line -->
+    <property name="buildConfiguration" value="Debug" overwrite="false" unless="${property::exists('buildConfiguration')}" /><!-- set "buildConfiguration" to "Debug" unless it has been set on the command line -->
+    <property name="buildAction" value="Build" overwrite="false" unless="${property::exists('buildAction')}" /><!-- set "buildAction" to "Build" unless it has been set on the command line -->
+    
+    <!-- Validate provided values of platform and build configuration -->
+    <fail 
+        if="${property::get-value('platform') != 'x64' and property::get-value('platform') != 'x86'}"
+        message="Platform must be set to x86 or x64." />
+    <fail 
+        if="${property::get-value('buildConfiguration') != 'Release' and property::get-value('buildConfiguration') != 'Debug'}"
+        message="Build Configuration must be set to Release or Debug." />
+        
+    <!-- Ensure that only x64 configurations are built. This assertion makes a certain amount
+        of other logic supporting 32-bit builds redundant, but we elect not to remove that code just yet. -->
+    <fail
+        if="${property::get-value('platform') != 'x64'}"
+        message="Platform should be set to x64. x86 configurations are no longer required or supported." />
+        
+    <!-- Log the configuration. -->
+    <echo message="Platform is set to ${platform}." />
+    <echo message="Build Configuration is set to ${buildConfiguration}." />
+    
+    <!-- Platform-specific settings -->
+    <if test="${property::get-value('platform') == 'x64' }">
+        <echo message="Configured for 64 bit build" />
+        <property name="nativePlatform" value="x64" />          <!-- In our native solutions, the 64bit build is called "x64" -->
+        <property name="dotnetPlatform" value="x64" />          <!-- In our dotnet solutions, the 64bit build is called "x64" -->
+        <property name="friendlyPlatform" value="64-bit" />     <!-- Humans call the 64 bit build "64-bit" -->
+        <property name="technicalPlatform" value="x86-64" />    <!-- "x86-64" is the technical name for 64bit -->
+        <property name="amdPlatform" value="amd64" />           <!-- the name AMD use -->
+        <property name="oraclePlatform" value="x64" />          <!-- the name Oracle use -->
+        <property name="cmake.target" value="Visual Studio 10" />
+    </if>
+    <if test="${property::get-value('platform') != 'x64' }">
+        <echo message="Configured for 32 bit build" />
+        <property name="platform" value="x86" />
+        <property name="nativePlatform" value="Win32" />        <!-- In our native solutions, the 32bit build is called "Win32" -->
+        <property name="dotnetPlatform" value="x86" />          <!-- In our dotnet solutions, the 32bit build is called "x86" -->
+        <property name="friendlyPlatform" value="32-bit" />     <!-- Humans call the 32 bit build "32-bit" -->
+        <property name="technicalPlatform" value="x86" />       <!-- "x86" is the technical name for 32bit -->
+        <property name="amdPlatform" value="x86" />             <!-- the name AMD use -->
+        <property name="oraclePlatform" value="i586" />         <!-- the name Oracle use -->
+        <property name="cmake.target" value="Visual Studio 10 Win64" />
+    </if>
+</project>

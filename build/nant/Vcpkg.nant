@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!--
+    Build Vcpkg projects.
+    Vcpkg packages C++ projects.
+    We use Vcpkg to provide the third-party libraries that we intend to use.
+-->
+<project name="Vcpkg">
+    <target name="Vcpkg">
+        <property name="dir_vcpkg" value="${dir_base}\build\vcpkg" />
+        <property name="tool_vcpkg" value="${dir_vcpkg}\vcpkg.exe" />
+        <property name="vcpkg_cmake_toolchain_file" value="${dir_vcpkg}\scripts\buildsystems\vcpkg.cmake" />
+        
+        <!-- If "vcpkg.exe" does not yet exist, we should build it. -->
+        <if test="${not file::exists(tool_vcpkg)}" >
+            <echo message="Staging VCPKG" />
+            <exec program="cmd.exe" commandline="/C bootstrap-vcpkg.bat" workingdir="${dir_vcpkg}" />
+        </if>
+        
+        <!-- Add "vcpkg" to the system path -->
+        <setenv name="Path" value="${environment::get-variable('Path')};${dir_vcpkg}" />
+        
+        <!-- Install the packages that we will use. This is very quick when the packages are already installed. -->
+        <echo message="Installing Vcpkg packages" />
+        <exec program="vcpkg.exe" commandline="--triplet x64-windows install arrow parquet" />
+        <echo message="Finished installing Vcpkg packages" />
+        
+        <!-- Add "cmake" to the system path -->
+        <setenv name="Path" value="${environment::get-variable('Path')};${dir_vcpkg}\downloads\tools\cmake-3.11.4-windows\cmake-3.11.4-win32-x86\bin" />
+    </target>
+</project>

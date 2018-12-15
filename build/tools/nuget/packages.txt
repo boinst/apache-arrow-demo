@@ -1,0 +1,11 @@
+NUnit 2.6.3
+Newtonsoft.Json 5.0.6
+Newtonsoft.Json 5.0.8
+Ninject 3.0.1.10
+NLog 2.0.1.2
+NUnit 2.6.2
+PdfSharp 1.3
+SharpZipLib 0.86.0
+ZedGraph 5.1.5
+MarkdownSharp 1.13.0.0
+Moq 4.0.10827

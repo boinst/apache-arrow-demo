@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+<project name="Common" basedir="..\..">
+    <!-- external definitions -->
+    <include buildfile="Tools.include" />
+    <include buildfile="BuildConfiguration.include" />
+    <include buildfile="Directories.include" /><!-- directory definitions -->
+    
+    <!-- Settings -->
+    <property name="svnAuth" value='--username bernst --password "lemon beans X 23" --no-auth-cache' />
+    <property name="svnGitAuth" value='--username optimatics --password "flutter A412" --no-auth-cache' />
+    <property name="license_CryptoObfuscator" value="lgCAAHnttbDE080BcwBOYW1lPUJlbiBFcm5zdCNDb21wYW55PU9wdGltYXRpY3MjRW1haWw9aXRhZG1pbkBvcHRpbWF0aWNzLmNvbSNTdWJzY3JpcHRpb249VHJ1ZSNTdWJzY3JpcHRpb25WYWxpZFRpbGw9MTgtTm92LTIwMTMjAQd9LXcZN3nmlAiyy2w93nHxlTnZ+nkCTBJElRzRj04i21YgSOc5NbQAiKp08ZjoqsQ=" />
+        
+    <!-- A file that can be used as a temporary file for any operation. -->
+    <property name="dir.temp" value="build\temp" />
+    <property name="file.temp" value="${dir.temp}\tempfile.txt" />
+    <property name="var.date" value="${datetime::get-day(datetime::now())}/${datetime::get-month(datetime::now())}/${datetime::get-year(datetime::now())}" />    <!-- day/month/year-->
+    <property name="buildStartTime" value="${datetime::get-hour(datetime::now())}:${datetime::get-minute(datetime::now())}" /> <!-- HH:mm -->
+    <property name="buildStart" value="${datetime::get-day(datetime::now())}/${datetime::get-month(datetime::now())}/${datetime::get-year(datetime::now())} ${datetime::get-hour(datetime::now())}:${datetime::get-minute(datetime::now())}" /> <!-- HH:mm -->
+    <property name="var.serialdate" value="${datetime::get-year(datetime::now())}${datetime::get-month(datetime::now())}${datetime::get-day(datetime::now())}" /> <!--yyymmdd -->
+    
+    <!-- load nant tasks from external libraries -->
+    <loadtasks assembly="C:\Tools\NAntContrib\NAnt.Contrib.Tasks.dll" />
+    <loadtasks assembly="C:\Tools\optimatics\petal-nanttasks.dll" />
+
+    <!-- Keys -->
+    <property name="file.key" value = "build\key\Optimatics.pfx" /><!-- The key for signing -->
+    <property name="pass.pfx" value = "FleqcFlh98Za" /><!-- the password for the pfx file -->
+    
+    <!-- backwards compatibility: where a variable has been renamed, the old name is defined here to minimise impact on other scripts importing this script -->
+    <property name="licenseCryptoObfuscator" value="${license_CryptoObfuscator}" />
+    
+    <!-- -->
+    <property name="nant.onsuccess" value="onsuccess" /><!-- -->
+    <property name="nant.onfailure" value="onfailure" />
+    <target name="onsuccess" >
+        <if test="${property::exists('testsfailed') and bool::parse(testsfailed)}">
+            <echo message="TEST FAILURE    UNSTABLE BUILD    TEST FAILURE    UNSTABLE BUILD" level="Error" />
+            <echo message="   ! the build was successful, but one or more tests failed !   " level="Error" />
+            <echo message="TEST FAILURE    UNSTABLE BUILD    TEST FAILURE    UNSTABLE BUILD" level="Error" />
+        </if>
+        <echo message="Build started at ${buildStart}" />
+        <echo message="Build finished at ${datetime::get-day(datetime::now())}/${datetime::get-month(datetime::now())}/${datetime::get-year(datetime::now())} ${datetime::get-hour(datetime::now())}:${datetime::get-minute(datetime::now())}" />
+    </target>
+    <target name="onfailure" >
+        <echo message="Build started at ${buildStart}" />
+        <echo message="Build finished at ${datetime::get-day(datetime::now())}/${datetime::get-month(datetime::now())}/${datetime::get-year(datetime::now())} ${datetime::get-hour(datetime::now())}:${datetime::get-minute(datetime::now())}" />
+    </target>
+    
+    <!-- ${scripts::GenerateGuid()} -->
+    <script language="C#" prefix="scripts" >
+        <references>              
+            <include name="System.dll" />
+        </references>
+        <code>
+          <![CDATA[
+            static System.Random random = new System.Random();
+            
+            // ${scripts::GenerateGuid()}
+            [Function("GenerateGuid")]
+            public static string GenerateGuid(  ) 
+            {
+                return Guid.NewGuid().ToString("D").ToUpper();
+            }
+                        
+            // ${scripts::RandomString(4)}
+            [Function("RandomString")]
+            public static string RandomString(int nchars)
+            {
+                StringBuilder sb = new StringBuilder(nchars);
+                while (sb.Length < nchars)
+                {
+                    char ch = Convert.ToChar(Convert.ToInt32(random.Next(48, 123)));
+                    if (Char.IsLetter(ch)) sb.Append(ch);
+                }
+                return sb.ToString();
+            }
+            
+            [Function("CountOccurencesOfStringInFile")]
+            public static int CountOccurencesOfStringInFile(string filename, string substring)
+            {
+                string input = System.IO.File.ReadAllText(filename);
+                string rx = System.Text.RegularExpressions.Regex.Escape(substring);
+                return System.Text.RegularExpressions.Regex.Matches(input, rx).Count;
+            }
+            
+            // ${scripts::ToHexadecimal(4)}
+            [Function("ToHexadecimal")]
+            public static string ToHexadecimal(int val)
+            {
+                return val.ToString("X");
+            }
+            
+            // ${scripts::FormatWin32ErrorCode(4)}
+            // http://msdn.microsoft.com/en-us/library/cc704588(v=prot.10).aspx
+            [Function("FormatWin32ErrorCode")]
+            public static string FormatWin32ErrorCode(int result)
+            {
+                if (result == 0) return string.Empty;
+                string msg = result.ToString() + " (" + result.ToString("X") + ")";
+                string errmsg = new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error()).Message;
+                if (string.IsNullOrWhiteSpace(errmsg)) return msg;
+                else return msg + ": " + errmsg;
+            }
+           ]]>
+        </code>
+    </script>
+    
+    
+    <!--
+        Clean system for a fresh build.
+        See: http://opal:90/wiki/Automated_Build_System#PrepareForBuild
+        This task is run before every build.
+        It removes files that may interfere with a build.
+    -->
+    <target name="PreBuild" unless="${target::has-executed('PreBuild')}" depends="VerifyAvailabilityOfTools" >
+        <echo message="Preparing the build agent for a new Build" />
+        
+        <!-- Touching these files will cause them to regenerate their outputs -->
+        <echo message="Touching resource files."/>
+        <touch failonerror="false">
+            <fileset failonempty="false" >
+                <include name="ver_rc.py" />
+                <include name="ver_st.py" />
+            </fileset>
+        </touch>
+
+    </target>
+
+</project>

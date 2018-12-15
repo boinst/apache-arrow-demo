@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!--
+    Install NuGet
+-->
+<project name="NuGet" basedir="..\..">
+    <property name="tool_nuget" value="src/.nuget/nuget.exe" />
+    
+    <!-- update nuget binary -->
+    <target name="InstallNuGet">
+        <!-- update nuget -->
+        <echo message="Updating NuGet" />
+        <exec program="src/.nuget/nuget.exe" workingdir="src/.nuget" if="${file::exists('src/.nuget/nuget.exe')}" >
+            <arg value="update" />
+            <arg value="-self" />
+            <arg value="-NonInteractive" />
+        </exec>
+        
+        <!-- obtain nuget -->
+        <get src="https://nuget.org/nuget.exe" dest="src/.nuget/nuget.exe" if="${not file::exists('src/.nuget/nuget.exe')}" />
+    </target>
+</project>

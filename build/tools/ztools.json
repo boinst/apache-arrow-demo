@@ -1,0 +1,43 @@
+[
+  {
+    "name": "7zip-9.20",
+    "url": "https://s3.amazonaws.com/optimatics-zulfiqar2/7zip-9.20.zip",
+    "description": "7-zip 9.20"
+  },
+  {
+    "name": "git-2.13.3",
+    "url": "https://s3.amazonaws.com/optimatics-zulfiqar2/PortableGit-2.13.3-64-bit.7z",
+    "description": "Git 2.13.3"
+  },
+  {
+    "name": "nant-0.92",
+    "url": "https://s3.amazonaws.com/optimatics-zulfiqar2/nant-0.92.zip",
+    "description": "NAnt 0.92"
+  },
+  {
+    "name": "nantcontrib-0.92",
+    "url": "https://s3.amazonaws.com/optimatics-zulfiqar2/nantcontrib-0.92.zip",
+    "description": "NAnt Contrib 0.92"
+  },
+  {
+    "name": "boinst-nantextensions-v1.0",
+    "url": "https://s3.amazonaws.com/optimatics-zulfiqar2/boinst-nantextensions-v1.0.zip",
+    "description": "NAnt Extensions"
+  },
+  {
+    "name": "nunit-3.6.0",
+    "url": "https://s3.amazonaws.com/optimatics-zulfiqar2/nunit-3.6.0.zip",
+    "description": "NUnit 3.6.0"
+  },
+  {
+    "name": "aws-cli-1.15.4",
+    "url": "https://s3.amazonaws.com/optimatics-zulfiqar2/aws-cli-1.15.4.zip",
+    "description": "AWS CLI 1.15.4"
+  },
+  {
+    "name": "sysinternalssuite-20170217",
+    "url": "https://s3.amazonaws.com/optimatics-zulfiqar2/sysinternalssuite-20170217.zip",
+    "description": "SysInternals Suite (Updated 2017-02-17)"
+  }
+]
+
